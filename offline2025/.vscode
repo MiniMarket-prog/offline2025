@@ -1,0 +1,5 @@
+{
+  "tailwindCSS.experimental.configFile": "tailwind.config.js",
+  "tailwindCSS.experimental.classRegex": [],
+  "css.validate": false
+}

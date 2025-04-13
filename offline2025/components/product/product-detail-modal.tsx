@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { fetchCategories } from "@/lib/product-service"
 import { generateBarcodeSVG, printBarcode } from "@/lib/barcode-utils"
-import { Package, Calendar, Printer, Edit } from "lucide-react"
+import { Package, Calendar, Printer, Edit, ImageOff } from "lucide-react"
 import type { Database } from "@/types/supabase"
+import ProductImage from "./product-image"
 
 type Product = Database["public"]["Tables"]["products"]["Row"]
 type Category = Database["public"]["Tables"]["categories"]["Row"]
@@ -115,16 +116,13 @@ export default function ProductDetailModal({ product, isOpen, onClose, onEdit }:
               )}
             </div>
 
-            {product.image && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-500 mb-2">Product Image</h4>
-                <div className="relative h-40 w-40 mx-auto border rounded-md overflow-hidden">
-                  <img
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+            {product.image ? (
+              <div className="mb-4 flex justify-center">
+                <ProductImage src={product.image} alt={product.name} size="lg" productId={product.id} />
+              </div>
+            ) : (
+              <div className="mb-4 flex justify-center items-center h-[200px] w-[200px] bg-gray-100 rounded-md mx-auto">
+                <ImageOff className="h-16 w-16 text-gray-400" />
               </div>
             )}
           </TabsContent>

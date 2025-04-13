@@ -28,7 +28,32 @@ export default function InventorySummary() {
   const [expiringProducts, setExpiringProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const online = isOnline()
+  const [online, setOnline] = useState(false)
+
+  // Handle online status
+  useEffect(() => {
+    // Safely set initial online status after component mount
+    setOnline(isOnline())
+
+    // Set up event listeners for online/offline events
+    const handleOnline = () => setOnline(true)
+    const handleOffline = () => setOnline(false)
+
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+    // Check status periodically (every 30 seconds)
+    const interval = setInterval(() => {
+      setOnline(isOnline())
+    }, 30000)
+
+    // Clean up event listeners and interval
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+      clearInterval(interval)
+    }
+  }, [])
 
   useEffect(() => {
     const loadData = async () => {

@@ -33,6 +33,9 @@ import StockAdjustmentModal from "./stock-adjustment-modal"
 import BulkImportExport from "./bulk-import-export"
 import type { Database } from "@/types/supabase"
 
+// Import the ProductImage component at the top of the file
+import ProductImage from "./product-image"
+
 type Product = Database["public"]["Tables"]["products"]["Row"]
 type Category = Database["public"]["Tables"]["categories"]["Row"]
 
@@ -357,15 +360,13 @@ export default function ProductList() {
                           <TableRow key={product.id}>
                             <TableCell className="font-medium">
                               <div className="flex items-center">
-                                {product.image && (
-                                  <div className="h-8 w-8 mr-2 bg-gray-100 rounded-md overflow-hidden">
-                                    <img
-                                      src={product.image || "/placeholder.svg"}
-                                      alt={product.name}
-                                      className="h-full w-full object-cover"
-                                    />
-                                  </div>
-                                )}
+                                <ProductImage
+                                  src={product.image}
+                                  alt={product.name}
+                                  size="sm"
+                                  productId={product.id}
+                                  className="mr-2"
+                                />
                                 <div>
                                   {product.name}
                                   {product.is_pack && <Package className="h-4 w-4 ml-2 inline text-blue-500" />}

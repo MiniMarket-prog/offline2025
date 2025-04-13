@@ -6,21 +6,69 @@ type Product = Database["public"]["Tables"]["products"]["Row"]
 type Category = Database["public"]["Tables"]["categories"]["Row"]
 
 // Fetch products
-export const fetchProducts = async () => {
+export const fetchProducts = async (page = 0, pageSize = 100) => {
   try {
     if (isOnline()) {
-      const { data, error } = await supabase.from("products").select("*").order("name")
+      const { data, error, count } = await supabase
+        .from("products")
+        .select("*", { count: "exact" })
+        .range(page * pageSize, (page + 1) * pageSize - 1)
+        .order("name")
 
       if (error) throw error
 
-      return { products: data, error: null }
+      // Store products in local storage for offline use
+      if (data && data.length > 0 && page === 0) {
+        const { getLocalProducts, storeProducts } = await import("./local-storage")
+        const existingProducts = getLocalProducts()
+
+        // Only update if we have new data
+        if (data.length !== existingProducts.length) {
+          storeProducts(data)
+        }
+      }
+
+      return {
+        products: data || [],
+        error: null,
+        totalCount: count || 0,
+        hasMore: data && count ? (page + 1) * pageSize < count : false,
+      }
     } else {
-      // Return products from local storage
-      // This would be implemented in a real app
-      return { products: [], error: null }
+      // Return products from local storage when offline
+      const { getLocalProducts } = await import("./local-storage")
+      const products = getLocalProducts()
+
+      // Apply pagination to local data
+      const paginatedProducts = products.slice(page * pageSize, (page + 1) * pageSize)
+
+      return {
+        products: paginatedProducts,
+        error: null,
+        totalCount: products.length,
+        hasMore: (page + 1) * pageSize < products.length,
+      }
     }
   } catch (error: any) {
-    return { products: [], error: error.message }
+    console.error("Error fetching products:", error)
+
+    // Fallback to local storage on error
+    try {
+      const { getLocalProducts } = await import("./local-storage")
+      const products = getLocalProducts()
+
+      // Apply pagination to local data
+      const paginatedProducts = products.slice(page * pageSize, (page + 1) * pageSize)
+
+      return {
+        products: paginatedProducts,
+        error: null,
+        totalCount: products.length,
+        hasMore: (page + 1) * pageSize < products.length,
+      }
+    } catch (fallbackError) {
+      return { products: [], error: error.message, totalCount: 0, hasMore: false }
+    }
   }
 }
 
@@ -76,14 +124,33 @@ export const fetchCategories = async () => {
 
       if (error) throw error
 
-      return { categories: data, error: null }
+      // Store categories in local storage for offline use
+      if (data && data.length > 0) {
+        const { getLocalCategories, storeCategories } = await import("./local-storage")
+        const existingCategories = getLocalCategories()
+
+        // Only update if we have new data
+        if (data.length !== existingCategories.length) {
+          storeCategories(data)
+        }
+      }
+
+      return { categories: data || [], error: null }
     } else {
-      // Return categories from local storage
-      // This would be implemented in a real app
-      return { categories: [], error: null }
+      // Return categories from local storage when offline
+      const { getLocalCategories } = await import("./local-storage")
+      return { categories: getLocalCategories(), error: null }
     }
   } catch (error: any) {
-    return { categories: [], error: error.message }
+    console.error("Error fetching categories:", error)
+
+    // Fallback to local storage on error
+    try {
+      const { getLocalCategories } = await import("./local-storage")
+      return { categories: getLocalCategories(), error: null }
+    } catch (fallbackError) {
+      return { categories: [], error: error.message }
+    }
   }
 }
 

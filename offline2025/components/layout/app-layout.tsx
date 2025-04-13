@@ -1,11 +1,29 @@
-import type React from "react"
-import AppHeader from "./app-header"
+"use client"
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+import RootLayout from "./root-layout"
+import type { ReactNode } from "react"
+import { OfflineIndicator } from "@/components/offline-indicator"
+import { useEffect } from "react"
+
+export default function AppLayout({ children }: { children: ReactNode }) {
+  // Ensure we have offline data when the app loads
+  useEffect(() => {
+    const loadOfflineData = async () => {
+      try {
+        const { ensureOfflineData } = await import("@/lib/local-storage")
+        await ensureOfflineData()
+      } catch (error) {
+        console.error("Error loading offline data:", error)
+      }
+    }
+
+    loadOfflineData()
+  }, [])
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <AppHeader />
-      <main className="flex-1 container mx-auto px-4 py-6 sm:px-6 lg:px-8">{children}</main>
-    </div>
+    <RootLayout>
+      {children}
+      <OfflineIndicator />
+    </RootLayout>
   )
 }

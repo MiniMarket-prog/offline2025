@@ -1,159 +1,225 @@
-import type { User } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 
 type Product = Database["public"]["Tables"]["products"]["Row"]
 type Category = Database["public"]["Tables"]["categories"]["Row"]
-
-type Profile = Database["public"]["Tables"]["profiles"]["Row"]
-type UserWithProfile = User & { profile: Profile }
+type Sale = {
+  id: string
+  items: any[]
+  subtotal: number
+  tax: number
+  total: number
+  payment_method: string
+  created_at: string
+  cashier_id: string
+}
 
 // Local storage keys
-const USERS_KEY = "mini_market_users"
-const CURRENT_USER_KEY = "mini_market_current_user"
+const PRODUCTS_KEY = "mini_market_products"
+const CATEGORIES_KEY = "mini_market_categories"
+const SALES_KEY = "mini_market_sales"
+const FAVORITES_KEY = "mini_market_favorites"
 const SYNC_QUEUE_KEY = "mini_market_sync_queue"
+const CURRENT_USER_KEY = "mini_market_current_user"
 
-// Store users in local storage
-export const storeUsers = (users: UserWithProfile[]) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users))
+// Products
+export const getLocalProducts = (): Product[] => {
+  if (typeof window === "undefined") return []
+  try {
+    const data = localStorage.getItem(PRODUCTS_KEY)
+    return data ? JSON.parse(data) : []
+  } catch (error) {
+    console.error("Error getting products from local storage:", error)
+    return []
   }
 }
 
-// Get users from local storage
-export const getLocalUsers = (): UserWithProfile[] => {
-  if (typeof window !== "undefined") {
-    const users = localStorage.getItem(USERS_KEY)
-    return users ? JSON.parse(users) : []
-  }
-  return []
-}
-
-// Store current user in local storage
-export const storeCurrentUser = (user: UserWithProfile | null) => {
-  if (typeof window !== "undefined") {
-    if (user) {
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user))
-    } else {
-      localStorage.removeItem(CURRENT_USER_KEY)
-    }
+export const storeProducts = (products: Product[]): boolean => {
+  if (typeof window === "undefined") return false
+  try {
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products))
+    return true
+  } catch (error) {
+    console.error("Error storing products in local storage:", error)
+    return false
   }
 }
 
-// Get current user from local storage
-export const getCurrentUser = (): UserWithProfile | null => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem(CURRENT_USER_KEY)
-    return user ? JSON.parse(user) : null
+// Categories
+export const getLocalCategories = (): Category[] => {
+  if (typeof window === "undefined") return []
+  try {
+    const data = localStorage.getItem(CATEGORIES_KEY)
+    return data ? JSON.parse(data) : []
+  } catch (error) {
+    console.error("Error getting categories from local storage:", error)
+    return []
   }
-  return null
 }
 
-// Add item to sync queue
-export const addToSyncQueue = (action: string, data: any) => {
-  if (typeof window !== "undefined") {
-    const queue = localStorage.getItem(SYNC_QUEUE_KEY)
-    const queueData = queue ? JSON.parse(queue) : []
-    queueData.push({
+export const storeCategories = (categories: Category[]): boolean => {
+  if (typeof window === "undefined") return false
+  try {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories))
+    return true
+  } catch (error) {
+    console.error("Error storing categories in local storage:", error)
+    return false
+  }
+}
+
+// Sales
+export const getLocalSales = (): Sale[] => {
+  if (typeof window === "undefined") return []
+  try {
+    const data = localStorage.getItem(SALES_KEY)
+    return data ? JSON.parse(data) : []
+  } catch (error) {
+    console.error("Error getting sales from local storage:", error)
+    return []
+  }
+}
+
+export const storeLocalSales = (sales: Sale[]): boolean => {
+  if (typeof window === "undefined") return false
+  try {
+    localStorage.setItem(SALES_KEY, JSON.stringify(sales))
+    return true
+  } catch (error) {
+    console.error("Error storing sales in local storage:", error)
+    return false
+  }
+}
+
+// Favorites
+export const getFavorites = (): Product[] => {
+  if (typeof window === "undefined") return []
+  try {
+    const data = localStorage.getItem(FAVORITES_KEY)
+    return data ? JSON.parse(data) : []
+  } catch (error) {
+    console.error("Error getting favorites from local storage:", error)
+    return []
+  }
+}
+
+export const storeFavorites = (favorites: Product[]): boolean => {
+  if (typeof window === "undefined") return false
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites))
+    return true
+  } catch (error) {
+    console.error("Error storing favorites in local storage:", error)
+    return false
+  }
+}
+
+// Sync Queue
+export const getSyncQueue = (): any[] => {
+  if (typeof window === "undefined") return []
+  try {
+    const data = localStorage.getItem(SYNC_QUEUE_KEY)
+    return data ? JSON.parse(data) : []
+  } catch (error) {
+    console.error("Error getting sync queue from local storage:", error)
+    return []
+  }
+}
+
+export const storeLocalSyncQueue = (queue: any[]): boolean => {
+  if (typeof window === "undefined") return false
+  try {
+    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue))
+    return true
+  } catch (error) {
+    console.error("Error storing sync queue in local storage:", error)
+    return false
+  }
+}
+
+export const removeFromSyncQueue = (id: string): boolean => {
+  if (typeof window === "undefined") return false
+  try {
+    const queue = getSyncQueue()
+    const updatedQueue = queue.filter((item) => item.id !== id)
+    return storeLocalSyncQueue(updatedQueue)
+  } catch (error) {
+    console.error("Error removing item from sync queue:", error)
+    return false
+  }
+}
+
+// Add to sync queue
+export const addToSyncQueue = (action: string, data: any): boolean => {
+  if (typeof window === "undefined") return false
+  try {
+    const queue = getSyncQueue()
+    queue.push({
       id: Date.now().toString(),
       action,
       data,
       timestamp: new Date().toISOString(),
     })
-    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queueData))
+    return storeLocalSyncQueue(queue)
+  } catch (error) {
+    console.error("Error adding to sync queue:", error)
+    return false
   }
 }
 
-// Get sync queue
-export const getSyncQueue = () => {
-  if (typeof window !== "undefined") {
-    const queue = localStorage.getItem(SYNC_QUEUE_KEY)
-    return queue ? JSON.parse(queue) : []
-  }
-  return []
-}
-
-// Clear sync queue
-export const clearSyncQueue = () => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(SYNC_QUEUE_KEY)
-  }
-}
-
-// Remove item from sync queue
-export const removeFromSyncQueue = (id: string) => {
-  if (typeof window !== "undefined") {
-    const queue = localStorage.getItem(SYNC_QUEUE_KEY)
-    if (queue) {
-      const queueData = JSON.parse(queue)
-      const newQueue = queueData.filter((item: any) => item.id !== id)
-      localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(newQueue))
+// User management
+export const storeCurrentUser = (user: any): boolean => {
+  if (typeof window === "undefined") return false
+  try {
+    if (user) {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user))
+    } else {
+      localStorage.removeItem(CURRENT_USER_KEY)
     }
+    return true
+  } catch (error) {
+    console.error("Error storing current user in local storage:", error)
+    return false
   }
 }
 
-// Product related functions
-export const getLocalProducts = (): Product[] => {
-  if (typeof window !== "undefined") {
-    const products = localStorage.getItem("mini_market_products")
-    return products ? JSON.parse(products) : []
-  }
-  return []
-}
-
-export const storeProducts = (products: Product[]) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("mini_market_products", JSON.stringify(products))
+export const getCurrentUser = (): any => {
+  if (typeof window === "undefined") return null
+  try {
+    const data = localStorage.getItem(CURRENT_USER_KEY)
+    return data ? JSON.parse(data) : null
+  } catch (error) {
+    console.error("Error getting current user from local storage:", error)
+    return null
   }
 }
 
-// Category related functions
-export const getLocalCategories = (): Category[] => {
-  if (typeof window !== "undefined") {
-    const categories = localStorage.getItem("mini_market_categories")
-    return categories ? JSON.parse(categories) : []
-  }
-  return []
-}
+// Add a function to ensure we always have some data to show when offline
+export const ensureOfflineData = async () => {
+  try {
+    // Check if we have products in local storage
+    const products = getLocalProducts()
+    const categories = getLocalCategories()
 
-export const storeCategories = (categories: Category[]) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("mini_market_categories", JSON.stringify(categories))
-  }
-}
+    // If we don't have any data cached, and we're online, fetch and cache it
+    if (products.length === 0 || categories.length === 0) {
+      const { isOnline } = await import("./supabase")
+      if (isOnline()) {
+        const { supabase } = await import("./supabase")
 
-// Sales related functions
-export const getLocalSales = (): any[] => {
-  if (typeof window !== "undefined") {
-    const sales = localStorage.getItem("mini_market_sales")
-    return sales ? JSON.parse(sales) : []
-  }
-  return []
-}
+        // Fetch and store products
+        const { data: productsData } = await supabase.from("products").select("*")
+        if (productsData && productsData.length > 0) {
+          storeProducts(productsData)
+        }
 
-export const storeLocalSales = (sales: any[]) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("mini_market_sales", JSON.stringify(sales))
-  }
-}
-
-// Favorites related functions
-export const getFavorites = (): Product[] => {
-  if (typeof window !== "undefined") {
-    const favorites = localStorage.getItem("mini_market_favorites")
-    return favorites ? JSON.parse(favorites) : []
-  }
-  return []
-}
-
-export const storeFavorites = (favorites: Product[]) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("mini_market_favorites", JSON.stringify(favorites))
-  }
-}
-
-// Sync queue related functions
-export const storeLocalSyncQueue = (queue: any[]) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue))
+        // Fetch and store categories
+        const { data: categoriesData } = await supabase.from("categories").select("*")
+        if (categoriesData && categoriesData.length > 0) {
+          storeCategories(categoriesData)
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error ensuring offline data:", error)
   }
 }

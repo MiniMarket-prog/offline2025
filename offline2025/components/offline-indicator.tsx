@@ -14,10 +14,12 @@ export function OfflineIndicator() {
 
     // Define event handlers
     const handleOnline = () => {
+      console.log("Browser reports online status")
       setOnline(true)
     }
 
     const handleOffline = () => {
+      console.log("Browser reports offline status")
       setOnline(false)
       setShowOfflineWarning(true)
 
@@ -27,14 +29,36 @@ export function OfflineIndicator() {
       }, 5000)
     }
 
+    // Handle custom connection status change event
+    const handleConnectionChange = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const isOnline = customEvent.detail?.online ?? false
+      console.log("Custom connection status change:", isOnline)
+      setOnline(isOnline)
+
+      if (!isOnline) {
+        setShowOfflineWarning(true)
+        setTimeout(() => {
+          setShowOfflineWarning(false)
+        }, 5000)
+      }
+    }
+
     // Add event listeners
     window.addEventListener("online", handleOnline)
     window.addEventListener("offline", handleOffline)
+    window.addEventListener("connectionstatuschange", handleConnectionChange)
+
+    // Check status immediately on mount
+    if (!isOnline()) {
+      handleOffline()
+    }
 
     // Clean up event listeners
     return () => {
       window.removeEventListener("online", handleOnline)
       window.removeEventListener("offline", handleOffline)
+      window.removeEventListener("connectionstatuschange", handleConnectionChange)
     }
   }, [])
 

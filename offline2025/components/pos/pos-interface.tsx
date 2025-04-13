@@ -294,6 +294,35 @@ export default function PosInterface() {
     return cart.reduce((sum, item) => sum + item.quantity, 0)
   }
 
+  // Add a useEffect to monitor online status
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("POS interface detected online status")
+      // You could add additional online handling here if needed
+    }
+
+    const handleOffline = () => {
+      console.log("POS interface detected offline status")
+      toast({
+        title: "You're offline",
+        description: "The app will continue to work and sync when you reconnect.",
+      })
+    }
+
+    // Check initial status
+    if (!navigator.onLine) {
+      handleOffline()
+    }
+
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [toast])
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 flex flex-col md:flex-row gap-4 p-4">

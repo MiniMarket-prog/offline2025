@@ -32,9 +32,35 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 })
 
-// Function to check if we're online
-export const isOnline = () => {
-  return typeof navigator !== "undefined" && navigator.onLine
+// Firefox-compatible offline detection
+let _isOfflineOverride = false
+
+// Function to manually set offline status (useful for Firefox)
+export const setOfflineStatus = (isOffline: boolean) => {
+  _isOfflineOverride = isOffline
+  // Dispatch custom event to notify components
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("connectionstatuschange", {
+        detail: { online: !isOffline },
+      }),
+    )
+  }
+}
+
+// Enhanced isOnline function with Firefox support
+export const isOnline = (): boolean => {
+  // First check if we have a manual override
+  if (_isOfflineOverride) {
+    return false
+  }
+
+  // Then check navigator.onLine
+  if (typeof navigator !== "undefined") {
+    return navigator.onLine
+  }
+
+  return true // Default to online for SSR
 }
 
 // Modify the safeSupabaseCall function to better handle offline scenarios
@@ -64,9 +90,15 @@ export const safeSupabaseCall = async <T>(
   }
 }
 
-// Alternatively, you could implement a more robust check that doesn't hang:
+// More robust check that doesn't hang
 export function checkOnlineStatus(): Promise<boolean> {
   return new Promise((resolve) => {
+    // If we have a manual override, respect it
+    if (_isOfflineOverride) {
+      resolve(false)
+      return
+    }
+
     // Use navigator.onLine as a quick first check
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
       resolve(false)
@@ -79,7 +111,12 @@ export function checkOnlineStatus(): Promise<boolean> {
     }, 3000)
 
     // Try to fetch a small resource
-    fetch("/api/ping", { method: "HEAD", cache: "no-store" })
+    fetch("/api/ping", {
+      method: "HEAD",
+      cache: "no-store",
+      // Add a cache-busting parameter
+      headers: { Pragma: "no-cache" },
+    })
       .then(() => {
         clearTimeout(timeout)
         resolve(true)

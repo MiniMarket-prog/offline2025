@@ -15,7 +15,7 @@ export default function CategoryFilter({ categories, selectedCategory, onSelectC
   return (
     <Select
       value={selectedCategory || "all"}
-      onValueChange={(value) => onSelectCategory(value === "all" ? null : value)}
+      onValueChange={(value: string) => onSelectCategory(value === "all" ? null : value)}
     >
       <SelectTrigger className="w-[180px]">
         <SelectValue placeholder="All Categories" />

@@ -3,13 +3,10 @@
 import { useState, useEffect } from "react"
 
 export function useOnlineStatus() {
-  // Initialize with null to avoid hydration mismatch
-  const [isOnline, setIsOnline] = useState<boolean | null>(null)
+  // Initialize with the current online status
+  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true)
 
   useEffect(() => {
-    // Set initial status after component mounts
-    setIsOnline(navigator.onLine)
-
     // Define event handlers
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
@@ -18,6 +15,9 @@ export function useOnlineStatus() {
     window.addEventListener("online", handleOnline)
     window.addEventListener("offline", handleOffline)
 
+    // Force an immediate check
+    setIsOnline(navigator.onLine)
+
     // Clean up event listeners
     return () => {
       window.removeEventListener("online", handleOnline)
@@ -25,6 +25,5 @@ export function useOnlineStatus() {
     }
   }, [])
 
-  // Return false during SSR to avoid hydration mismatch
-  return isOnline === null ? true : isOnline
+  return isOnline
 }

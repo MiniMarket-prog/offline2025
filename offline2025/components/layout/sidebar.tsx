@@ -28,7 +28,6 @@ import {
   LogOut,
   Store,
 } from "lucide-react"
-import { isOnline } from "@/lib/supabase"
 import { useState, useEffect } from "react"
 
 export default function AppSidebar() {
@@ -37,7 +36,12 @@ export default function AppSidebar() {
 
   useEffect(() => {
     // Update online status after component mounts on client
-    setOnline(isOnline())
+    const updateOnlineStatus = () => {
+      setOnline(navigator.onLine)
+    }
+
+    // Set initial status
+    updateOnlineStatus()
 
     // Set up event listeners to update status when it changes
     const handleOnline = () => setOnline(true)
@@ -47,7 +51,7 @@ export default function AppSidebar() {
     window.addEventListener("offline", handleOffline)
 
     return () => {
-      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("online", handleOffline)
       window.removeEventListener("offline", handleOffline)
     }
   }, [])
